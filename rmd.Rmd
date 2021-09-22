@@ -332,7 +332,6 @@ Vale ressaltar, que para gráficos de séries temporais, o eixo precisa ser uma 
 
 
 
-
 # Outras opções de pacotes para visualização de dados
 
 Vamos deixar abaixo uma breve introdução de outros pacotes que você pode usar para plotar gráficos. Não vamos nos aprofundar em nenhum deles, mas como mencionado no começo do post, vamos deixar alguns links para você acessar e se aprofundar.
