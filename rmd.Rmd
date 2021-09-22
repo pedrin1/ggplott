@@ -1,0 +1,379 @@
+---
+title: "ggplot2"
+author: "Pedro de Brito Neto"
+date: "23/08/2021"
+output: html_document
+---
+
+
+Agora que já vimos os conceitos básicos do *ggplot* no post anterior, vamos mostrar um pouco como você pode aprimorar o seu gráfico de algumas formas como, por exemplo, adicionar legendas, alterar cores, posições, etc. Para isso vamos trabalhar com os gráficos mais utilizados:
+
+- `geom_bar()/ geom_col()` gráfico de barras/ gráfico de colunas
+- `box_plot()` box-plot
+- `geom_histogram()` histograma
+- `geom_point()` gráfico de dispersão 
+- `geom_line()` séries temporais
+- `` 
+
+
+vale ressaltar que quando se trata de encrementar um gráfico,  existem inumeras maneiras de fazer isso. Vamos mostrar apenas algumas e deixar alguns links ao longo do texto que se aprofundam no tema.
+
+```{r, message = F, warning=FALSE}
+library(tidyverse)
+```
+
+## Position
+
+quando falamos em agrupos as informações nos gráficos, podemos pensar em 3 argumentos principais para o `position`: `position = "stack"`, `position = "fill"` e `position = "dodge"`. Basicamente cada um desses irá agrupar suas informações de formas diferentes. Para mostrar isso vamos utilizar a base de dados *Cars93* do pacote `MASS`, caso deseje utilizar essa base de dados e não tenha o pacote instalado no seu computador, basta rodar o código `install.packages("MASS")`.  
+
+
+```{r, message = F, warning=FALSE}
+library(MASS)
+```
+
+
+```{r}
+ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
+  geom_bar(position = "stack") + 
+    scale_fill_viridis_d() + 
+  theme_bw()
+
+
+
+```
+
+
+No gráfico acima utilizamos o `position = "stack"`, ele fornece gráfico de barras empilhado. Os subgrupos são exibidos apenas uns sobre os outros.
+
+
+```{r}
+ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
+  geom_bar(position = "fill") + 
+    scale_fill_viridis_d() + 
+  theme_bw()
+
+```
+
+`position = "fill"` empilha barras e padroniza cada pilha para ter altura constante. Agora, a porcentagem de cada subgrupo está representada, permitindo estudar a evolução de sua proporção no todo.
+
+```{r}
+
+ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
+  geom_bar(position = "dodge") + 
+    scale_fill_viridis_d() + 
+  theme_bw()
+
+
+
+```
+
+`position = "dodge"` pode-se dizer que é um dos mais utilizado, ele irá colocar as barras lado a lado. Normalmente, informações desse tipo ficam mais fáceis de serem visualizadas, a não ser que exitam muitas informações podendo ficar um pouco confuso. Caso isso acontece pode ser interessante fazer algumas modificações nos gráficos.
+
+Observe o gráfico acima e note que as barras possuem larguras diferentes. O ggplot faz isso automaticamente quando alguma das categorias esta faltando, ou seja, ele deixa as barras mais grossas pra compensar a que está ausente. Uma solução, mas não a única para concetar isso seria utilizar `position = position_dodge(preserve = "single")`, veja:
+
+```{r}
+ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
+  geom_bar(position = position_dodge(preserve = "single")) + 
+    scale_fill_viridis_d() + 
+  theme_bw()
+
+
+```
+
+
+## Adicionando algumas informações 
+
+#### Frequência
+Como dito acima, as vezes é interessante adicionar algumas informações aos gráficos para facilitar a visualização. Para o próximo  vamos utilizar a base de dados *diamonds* contida no R. 
+
+```{r}
+dados_resumo2 <- diamonds %>% 
+  group_by(cut, color) %>% 
+  summarise(cont = n())
+
+dados_resumo2 %>% 
+  ggplot() + 
+  geom_bar(aes(x = cut, y = cont, group = color, fill = color), 
+           stat = "identity", position = "dodge") +
+  geom_text(aes(x = cut, y = cont, label = cont, group = color), 
+            position =  position_dodge(width = 1), size = 2.5,
+            vjust = 0.4, hjust = -0.1, angle = 0) + 
+  coord_flip() + 
+  theme_bw()
+```
+
+No gráfico acima adicionamos a frequência respectiva acima de cada barra, fizemos isso com a ajuda do `geom_text`, note que utilizamos o `position =  position_dodge(width = 1)`. diferente do `position = "dodge"` usado anteriormente, essa outra maneira nos permite configuar algumas coisas como o `width`. Nesse caso foi necessário usar para "configuar" a posição da legenda. Também podemos "brincar" com outros ajustes como o `vjust` e `hjust` que servem para mover a legenda verticalmente e horizontalmente. Também temos o `angle`, que rotacina as legendas quando você fornece o ângulo desejado. Aqui também fizemos o uso do `coord_flip()` para rotacionar os eixos do gráfico. 
+
+
+#### Porcentagem 
+
+```{r}
+dados_resumo <- Cars93 %>% 
+  group_by(Type, AirBags) %>% 
+  summarise(cont = n()) %>% 
+   mutate(pct = prop.table(cont))
+
+
+dados_resumo %>% 
+  ggplot(aes(label = scales::percent(pct))) + 
+  geom_bar(aes(x = Type, y = cont, group = AirBags, fill = AirBags), 
+           stat = "identity", position = "dodge") + 
+  geom_text(aes(x = Type, y = cont, group = AirBags), 
+            position =   position_dodge(width = .9), vjust = 0,
+            size = 2.3, 
+            hjust = - 0.05) +
+  scale_fill_viridis_d() + 
+  theme_bw() +
+  facet_wrap(~AirBags) +
+  theme(legend.position="none") + 
+  coord_flip()
+
+```
+
+Também pode ser interessante em alguns caso adicionar a porcentagem relativa em cada barra, uma maneira de fazer e criar uma coluna no seu banco de dados que irá conter a porcentagem de cada observação em relação ao total, usamos o `prop.table()`.  Agora é só fazer parecido com o que fizemos anteriormente, passando as coordenadas para o `geom_text()` e ajustando ao seu gosto pessoal. Aqui precisamos adicionar também um *label* e ara isso utilizamos a função `percent()` do pacote `scales`, lembrando que caso não tenha o pacote no seu computador será necessário fazer a instalação. 
+
+
+## Encrementando um Boxplot
+
+Um gráfico comumente utilizado para visualizar dados é o Boxplot. medidas de estatísticas descritivas como o mínimo, máximo, primeiro quartil, segundo quartil ou mediana e o terceiro quartil formam o boxplot.. Também nos permite visualizar a distribuição e valores discrepantes (outliers) dos dados, fornecendo assim um meio complementar para desenvolver uma perspectiva sobre a distribuição dos dados. Podemos montar desde gráficos simples até alguns mais elaborados e esteticamente mais bonitos.
+
+
+
+```{r}
+dfhair <- data.frame(HairEyeColor)
+ggplot(dfhair, aes(x = Sex, y = Freq)) +
+  theme_minimal() +
+  geom_boxplot() +
+  geom_dotplot(
+    binaxis = 'y',
+    stackdir = 'center',
+    dotsize = 1,
+    binwidth = 2
+  ) +
+  scale_x_discrete(labels = c("Homem", "Mulher")) +
+  xlab("Sexo") +
+  ylab("Frequencia") 
+```
+
+Aqui plotamos dois gráficos um ao lado do outro. Note que para fazer um boxplot bem elaborado não precisa de muitas camadas. O que pode ser novo aqui são alguns argumentos utilizados dentro do `geom_dotplot()`. Essa camada permite adicionar gráficos de pontos que quando combinado com o boxplot, nos permite uma visualização mais completa dos dados. Você pode dar uma olhada mais aprofundada em todos os argumentos do `geom_dotplot()` clickando [aqui](https://ggplot2.tidyverse.org/reference/geom_dotplot.html).
+
+```{r}
+ggplot(dfhair, aes(x = Sex, y = Freq,
+                   fill = Sex)) +
+  theme_minimal() +
+  geom_boxplot(
+    outlier.colour = "black",
+    outlier.shape = 8,
+    outlier.size = 4
+  ) +
+  scale_x_discrete(labels = c("Homem", "Mulher")) +
+  labs(
+    title = "Boxplot",
+    x = "Sexo",
+    y = "Frequência",
+    subtitle = "HairEyeColor",
+    fill = "Sexo"
+  ) +
+  scale_fill_manual(values =
+                      c("darkorchid4", "brown2"))
+```
+
+Caso prefira preencher os gráficos com cores da sua escolhar, basta alterar o `color` para `fill` dentro do `aes` e escolher a sua paleta de cores preferida ou até mesmo utilizar `scale_fill_manual` para escolher as cores de sua preferência. Também utilizamos o `labs` para adicionar/ alterar algumas legendas do gráfico
+
+
+# Histogramas um pouco mais elaborados
+
+Fazer histogramas com mais de uma variável para comparação pode ser interessantes em alguns casos. Para o exemplo abaixo vamos criar um data frame simples com duas variáveis geradas a partir da distribuição normal.
+
+```{r}
+data <- data.frame(
+  type = c( rep("variavel 1", 1000), rep("variavel 2", 1000) ),
+  value = c( rnorm(1000), rnorm(1000, mean=4) )
+)
+
+# Represent it
+data %>%
+  ggplot( aes(x=value, fill=type)) +
+    geom_histogram( color="yellow", alpha=0.75, position = 'identity') +
+    scale_fill_manual(values=c("darkorchid4", "brown2")) +
+    theme_bw() +
+    labs(fill="")
+```
+
+Um argumento legal capaz de nos ajudar na visualização dos gráficos em alguns casos é o `alpha`. O `alpha` se refere à opacidade de um geom. Os valores alphavariam de 0 a 1, com valores mais baixos correspondendo a cores mais transparentes. `color` muda o contorno das barras dos gráficos, também pode nos ajudar na diferenciação dos gráficos quando eles se cruzam.
+
+
+```{r}
+ggplot(diamonds, aes(x=price)) + 
+  geom_histogram() + 
+  facet_wrap(~cut, scales="free", ncol = 2) +
+  theme_bw()
+
+```
+
+Para Histogramas também pode ser interessante utilizar facetas para verificar as distribuições. Note que aqui utilizamos `scales = "free"` é utilizado para permitir que as escalas de cada gráfico fiquem livres, ou seja, não existe um padrão quando se trata de escalas (abaixo vamos plotar o mesmo gráfico sem esse argumento). É importante tomar cuidado com isso quando for comparar os gráficos e lembrar que eles possuem escalas diferentes entre si. Também utilizamos o `ncol` para determinar a quantidade de colunas para os gráficos, também poderíamos determinar a quantidade de linhas com o `nrow`
+
+```{r}
+# exemplo sem scales = "free"
+
+ggplot(diamonds, aes(x=price)) + 
+  geom_histogram() + 
+  facet_wrap(~cut, nrow = 2) +
+  theme_bw()
+
+```
+- *sugestão de ideias*
+
+# gráficos de dispersão 
+
+Gráficos de dispersão são bem utilizados, principalmente para verificar alguma correlação entre as variáveis. Abaixo Vamos plotar 3 gráficos de dispersão diferentes, cada um com uma característica
+
+```{r}
+
+ggplot(Cars93, aes(Min.Price, Price)) +
+  geom_point(color = "darkorchid4") +
+  theme_bw()
+
+ggplot(Cars93, aes(Min.Price, Price)) +
+  geom_point(aes(size = Price)) +
+  theme_bw() 
+
+ggplot(Cars93, aes(Min.Price, Price)) +
+  geom_point(color = "#b51bb0") +
+  theme_bw() +
+  geom_vline(xintercept = 10:13, col="red") +
+  geom_hline(yintercept = 20, col="red")
+
+```
+
+O primeiro gráfico é bem simples, apenas alteramos a cor dos pontos e o tema. No segundo gráfico utilizamos `size = Price` para alterar o tamanho dos pontos de acordo com a variável "Price", esse argumento pode ser muito interessante em alguns casos. No último gráfico mostramos a possibilidade de adicionar algumas linhas no seu gráfico por meio de `geom_vline` e `geom_hline`, você pode por exemplo utilizar o `geom_hline` e colocar como argumento a média da variável.
+
+# Séries temporais
+
+
+  Vamos mostrar um exemplo simples de um gráfico de séries temporais e algumas maneiras de deixar ele mais elaborado Para isso vamos utilizar alguns pacotes para criar a base de dados.
+
+
+```{r, message = F, warning=FALSE}
+library(BatchGetSymbols)
+library(ggpmisc)
+#Definindo ações para extração de dados
+empresas <- c('PETR4.SA', 'CIEL3.SA')
+#Definindo a minha série de tempo
+first.date <- Sys.Date() - 90
+last.date <- Sys.Date()
+#Inserindo os paramentros para extrair o meu dataframe
+temp <- BatchGetSymbols(tickers = empresas,
+                        first.date = first.date,
+                        last.date = last.date,
+                        do.cache = FALSE)
+meudataset <- temp$df.tickers
+```
+
+
+
+```{r}
+ggplot(meudataset,
+       aes(x = ref.date,
+           y = volume,
+           color = ticker)) +
+  geom_line() 
+ggplot(meudataset,
+       aes(x = ref.date,
+           y = volume,
+           color = ticker)) +
+  geom_line() +
+  labs(
+    title = "Série Temporal",
+    subtitle = "Ações",
+    x = "Data",
+    y = "Volume de Ações",
+    caption = "Fonte: Bovespa"
+  ) +
+  theme_bw() + 
+  geom_point() + 
+  theme(legend.position = "bottom") +
+  scale_x_date(date_breaks = "2 week")
+```
+
+Note algumas diferenças do primeiro para o segundo gráfico que podem agregar valores caso queira apresentar para alguém. No segundo gráfico, usamos algumas novidades como o `scale_x_date(date_breaks = "2 week")` que irá "quebrar" o seu eixo x e exibir as informações de 2 em 2 semanas. o `geom_point` aqui pode ser estetícamente interessante, ele nos possibilita ter uma idéia de melhor dos picos *rever essa frase* do gráfico.
+
+### Selecione o período de tempo
+
+Em alguns casos você pode querer selecionar apenas um intervalo de tempo. Uma forma de fazer isso é utilizar o `limit` da função `scale_x_date()`  para selecionar um período de tempo nos dados
+
+
+```{r}
+ggplot(meudataset,
+       aes(x = ref.date,
+           y = volume,
+           color = ticker)) +
+  geom_line() +
+  labs(
+    title = "Série Temporal",
+    subtitle = "Ações",
+    x = "Data",
+    y = "Volume de Ações",
+    caption = "Fonte: Bovespa"
+  ) +
+  theme_bw() + 
+  geom_point() + 
+  theme(legend.position = "bottom") +
+  scale_x_date(limit=c(as.Date("2021-06-14"),as.Date("2021-07-09")),date_breaks = "1 week") +
+  scale_color_manual(values=c("darkorchid4", "brown2"))
+
+```
+
+
+Vale ressaltar, que para gráficos de séries temporais, o eixo precisa ser uma variável do tipo **data**. Caso contrário, seria apenas um gráfico de linhas.
+
+# Gráficos de calor 
+
+
+
+
+
+# Outras opções de pacotes para visualização de dados
+
+Vamos deixar abaixo uma breve introdução de outros pacotes que você pode usar para plotar gráficos. Não vamos nos aprofundar em nenhum deles, mas como mencionado no começo do post, vamos deixar alguns links para você acessar e se aprofundar.
+
+### **plotly**
+
+O pacote `plotly`  cria gráficos interativos da web a partir de gráficos do ggplot. Uma maneira muito simples de usar o pacote é atribuir um gráfico do ggplot a um objeto e plotar esse gráfico com o `ggplotly`. Para esse exemplo vamos usar um gráfico que fizemos la no comecinho do post.
+
+
+```{r message=FALSE, warning=FALSE}
+library(plotly)
+
+pt <- ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
+  geom_bar(position = position_dodge(preserve = "single")) + 
+    scale_fill_viridis_d() + 
+  theme_bw()
+
+ggplotly(pt)
+
+```
+
+<https://plotly.com/r/>
+
+<https://operdata.com.br/blog/como-usar-o-pacote-plotly-no-r/>
+
+
+### **highcharter**
+
+o pacote `highcharter` também serve para fazer gráficos interativos. Já fizemos um post muito interessante para mostrar o uso desse pacote e você pode acessar clickando aqui [aqui](https://daslab-ufes.github.io/highcharter/). 
+
+
+
+### **gganimate**
+
+`gganimate` é um pacote que permite a construção de gráficos animados, por exemplo, poderíamos construir um gráfico em formato de  gifs ou vídeos ilustrando alguns conceitos de distribuições de probabilidade com mesma média e variâncias diferentes por exmeplo. Também já fizemos um post incrível sobre esse post, é só clickar [aqui](https://daslab-ufes.github.io/estatistica_animada/).
+
+# Referências 
+
+<https://operdata.com.br/blog/como-interpretar-um-boxplot/>
+
+<https://www.r-graph-gallery.com/index.html>
+
+<https://github.com/rstudio/cheatsheets/blob/master/data-visualization-2.1.pdf>
+
