@@ -383,3 +383,4 @@ o pacote `highcharter` também serve para fazer gráficos interativos. Já fizem
 
 <https://github.com/rstudio/cheatsheets/blob/master/data-visualization-2.1.pdf>
 
+
