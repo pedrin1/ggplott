@@ -14,20 +14,22 @@ Agora que já vimos os conceitos básicos do *ggplot* no post anterior, vamos mo
 - `geom_line()`: gráfico de linhas.
 - `` 
 
-Vale ressaltar que quando se trata de incrementar um gráfico,  existem inúmeras maneiras de fazer isso. Vamos mostrar apenas algumas e deixar alguns links ao longo do texto que se aprofundam no tema.
+Vale ressaltar que quando se trata de incrementar um gráfico,  existem inúmeras maneiras de fazer isso. Vamos mostrar apenas algumas delas aqui e deixar alguns links ao longo do texto que se aprofundam no tema.
 
 Vamos carregar inicialmente o pacote `tidyverse`, que carrega automaticamente o `ggplot2` e outros que possamos utilizar ao longo do texto. 
 
 ```{r, message = F, warning=FALSE}
 library(tidyverse)
 library(MASS)
+library(highcharter)
 ```
 
 ## Gráfico de barras
 
 ### `position`
 
-Quando falamos em apresentar as informações no gráfico de barras, podemos pensar em 3 possibilidades para o argumento `position`: `position = "stack"`, `position = "fill"` e `position = "dodge"`. Basicamente cada um desses irá apresentar suas informações de formas diferentes. Para mostrar isso vamos utilizar a base de dados *Cars93* do pacote `MASS`. Caso deseje utilizar essa base de dados e não tenha o pacote instalado no seu computador, basta rodar o código `install.packages("MASS")`.  
+Quando falamos em apresentar as informações no gráfico de barras, podemos pensar em 3 possibilidades para o argumento `position`: `position = "stack"`, `position = "fill"` e `position = "dodge"`. Basicamente cada um desses irá apresentar as informações de formas diferentes. Para mostrar isso vamos utilizar a base de dados *Cars93* do pacote `MASS`. Caso deseje utilizar essa base de dados e não tenha o pacote instalado no seu computador, basta rodar o código `install.packages("MASS")`.  
+
 ```{r}
 ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
   geom_bar(position = "stack") + 
@@ -55,9 +57,9 @@ ggplot(Cars93, aes(x = Type, fill = AirBags)) +
   theme_bw()
 ```
 
-O caso `position = "dodge"` é um dos casos mais utilizado, pois ele irá colocar as barras lado a lado. Normalmente, informações dessa forma ficam mais fáceis de serem visualizadas. Porém, deve-se tomar cuidado caso existam muitas categorias em uma das variáveis, o que pode tornar o gráfico um pouco confuso. Caso isso aconteça pode ser interessante fazer algumas modificações nos gráficos.
+O caso `position = "dodge"` é um dos casos mais utilizados, pois ele irá colocar as barras lado a lado. Normalmente, informações dessa forma ficam mais fáceis de serem visualizadas. Porém, deve-se tomar cuidado caso existam muitas categorias em uma das variáveis, o que pode tornar o gráfico um pouco confuso. Caso isso aconteça pode ser interessante fazer algumas modificações nos gráficos.
 
-Observe o gráfico acima e note que as barras possuem larguras diferentes. O ggplot faz isso automaticamente quando alguma das categorias esta faltando, ou seja, ele deixa as barras mais grossas pra compensar aquela que está ausente. Uma possível solução é utilizar `position = position_dodge(preserve = "single")`. Veja:
+Observe o gráfico acima e note que algumas das barras possuem larguras diferentes. O ggplot faz isso automaticamente quando alguma das categorias está faltando, ou seja, ele deixa as barras mais grossas pra compensar aquela que está ausente. Uma possível solução é utilizar `position = position_dodge(preserve = "single")`. Veja:
 
 ```{r}
 ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
@@ -73,7 +75,7 @@ ggplot(Cars93, aes(x = Type, fill = AirBags)) +
 
 Como dito acima, as vezes é interessante adicionar algumas informações aos gráficos para facilitar a visualização. Para o próximo exemplo vamos utilizar a base de dados *diamonds* contida no R. 
 
-```{r}
+```{r, message=FALSE}
 dados_resumo2 <- diamonds %>% 
   group_by(cut, color) %>% 
   summarise(cont = n())
@@ -89,15 +91,15 @@ dados_resumo2 %>%
   theme_bw()
 ```
 
-No gráfico acima adicionamos a frequência respectiva acima de cada barra, fizemos isso com a ajuda do `geom_text`, note que utilizamos o `position =  position_dodge(width = 1)`. Diferentemente de quando usamos `position = "dodge"` anteriormente, essa outra maneira nos permite configurar algumas coisas como a largura, controlado pelo argumento `width`. Nesse caso foi necessário usar para "configurar" a posição da legenda. Também podemos "brincar" com outros ajustes como o `vjust` e `hjust` que servem para mover a legenda verticalmente e horizontalmente. Também temos o `angle`, que rotaciona as legendas quando você fornece o ângulo desejado. Aqui também fizemos o uso do `coord_flip()` para rotacionar os eixos do gráfico. 
+No gráfico acima adicionamos a frequência respectiva acima de cada barra, fizemos isso com a ajuda do `geom_text`. Note que utilizamos o `position =  position_dodge(width = 1)`. Diferentemente de quando usamos `position = "dodge"` anteriormente, essa outra maneira nos permite configurar algumas coisas como a largura, controlado pelo argumento `width`. Nesse caso foi necessário usar para "configurar" a posição da legenda. Também podemos "brincar" com outros ajustes como o `vjust` e `hjust` que servem para mover a legenda verticalmente e horizontalmente. Também temos o `angle`, que rotaciona as legendas quando você fornece o ângulo desejado. Aqui também fizemos o uso do `coord_flip()` para rotacionar os eixos do gráfico. 
 
 #### Porcentagem 
 
-```{r}
+```{r, message=FALSE}
 dados_resumo <- Cars93 %>% 
   group_by(Type, AirBags) %>% 
-  summarise(cont = n()) %>% 
-   mutate(pct = prop.table(cont))
+  summarise(cont = n()) %>%
+  mutate(pct = prop.table(cont))
 
 
 dados_resumo %>% 
@@ -116,7 +118,7 @@ dados_resumo %>%
 
 ```
 
-Também pode ser interessante em alguns caso adicionar a porcentagem relativa em cada barra. Uma maneira de fazer e criar uma coluna no seu banco de dados, que irá conter a porcentagem de cada observação em relação ao total, é usando o `prop.table()`.  Agora é só fazer parecido com o que fizemos anteriormente, passando as coordenadas para o `geom_text()` e ajustando ao seu gosto pessoal. Aqui precisamos adicionar também um *label* e para isso utilizamos a função `percent()` do pacote `scales`.
+Também pode ser interessante em alguns caso adicionar a porcentagem relativa em cada barra. Uma maneira de fazer e criar uma coluna no seu banco de dados, que irá conter a porcentagem de cada observação em relação ao total, é usando a função `prop.table()`, por exemplo.  Agora é só fazer parecido com o que fizemos anteriormente, passando as coordenadas para o `geom_text()` e ajustando ao seu gosto pessoal. Aqui precisamos adicionar também um *label* e para isso utilizamos a função `percent()` do pacote `scales`.
 
 ## Incrementando um Boxplot
 
@@ -138,7 +140,7 @@ ggplot(dfhair, aes(x = Sex, y = Freq)) +
   ylab("Frequencia") 
 ```
 
-Aqui plotamos dois gráficos um ao lado do outro. Note que para fazer um boxplot bem elaborado não é necessário adicionar muitas camadas. O que pode ser novo aqui são alguns argumentos utilizados dentro do `geom_dotplot()`. Essa camada permite adicionar gráficos de pontos que quando combinado com o boxplot, nos permite uma visualização mais completa dos dados. Você pode dar uma olhada mais aprofundada em todos os argumentos do `geom_dotplot()` clicando [aqui](https://ggplot2.tidyverse.org/reference/geom_dotplot.html).
+Aqui plotamos dois gráficos um ao lado do outro. Note que para fazer um boxplot bem elaborado não é necessário adicionar muitas camadas. O que pode ser novo aqui nessa visualização é a utilização de uma camada com `geom_dotplot()`, com seus respectivos argumentos. Essa camada permite adicionar um gráfico de pontos que combinado com o boxplot pode permitir uma visualização mais completa dos dados. Você pode dar uma olhada mais aprofundada em todos os argumentos do `geom_dotplot()` clicando [aqui](https://ggplot2.tidyverse.org/reference/geom_dotplot.html).
 
 ```{r}
 ggplot(dfhair, aes(x = Sex, y = Freq,
@@ -167,13 +169,12 @@ Caso prefira preencher os gráficos com cores da sua escolha, basta alterar o `c
 
 Fazer histogramas com mais de uma variável para comparação pode ser interessantes em alguns casos. Para o exemplo abaixo vamos criar um `data.frame` simples com duas variáveis geradas a partir da distribuição normal.
 
-```{r}
+```{r, message=FALSE}
 da <- data.frame(
   type = rep(c("variavel 1", "variavel 2"), each = 1000),
   value = c(rnorm(1000), rnorm(1000, mean = 4))
 )
 
-# Represent it
 da %>%
   ggplot(aes(x=value, fill=type)) +
     geom_histogram(color="yellow", 
@@ -188,7 +189,7 @@ Um argumento legal capaz de nos ajudar na visualização dos gráficos em alguns
 
 Uma outra forma de apresentar a mesma informação, porém sem que os gráficos se "cruzem" é utilizar uma faceta para cada um dos gráficos.
 
-```{r}
+```{r, message=FALSE}
 da %>%
   ggplot(aes(x = value, fill = type)) +
   geom_histogram(colour = "grey75") +
@@ -203,7 +204,7 @@ Ainda sobre histogramas, podemos considerar outros argumentos importantes dentro
 ```{r}
 ggplot(diamonds, aes(x=price)) + 
   geom_histogram() + 
-  facet_wrap(~cut, scales="free", ncol = 2) +
+  facet_wrap(~ cut, scales = "free", ncol = 2) +
   theme_bw()
 ```
 
@@ -219,7 +220,7 @@ ggplot(diamonds, aes(x=price)) +
 
 É possível utlizar o `facet_grid` para comparar distribuições de combinações de duas variáveis, considerando ainda histogramas. Veja o seguinte exemplo: 
 
-```{r}
+```{r, message=FALSE}
 ggplot(diamonds, aes(x = price, y = ..density..)) + 
   geom_histogram(fill = "darkviolet") + 
   facet_grid(color ~ cut) +
@@ -249,7 +250,7 @@ ggplot(Cars93, aes(Min.Price, Price)) +
   geom_hline(yintercept = 20, col="red")
 ```
 
-O primeiro gráfico é bem simples, apenas alteramos a cor dos pontos e o tema. No segundo gráfico utilizamos `size = Price` para alterar o tamanho dos pontos de acordo com a variável `Price`. Esse argumento pode ser muito interessante em alguns casos. No último gráfico mostramos a possibilidade de adicionar algumas linhas no seu gráfico por meio de `geom_vline` e `geom_hline`. Por exemplo, podemos utilizar o `geom_hline` para colocar como argumento a média da variável no eixo y e o `geom_vline` para plotar a média da variável no eixo x, da seguinte forma.
+O primeiro gráfico é bem simples, apenas alteramos a cor dos pontos e o tema. No segundo gráfico utilizamos `size = Price` para alterar o tamanho dos pontos de acordo com a variável `Price`. Esse argumento pode ser muito interessante em alguns casos. No último gráfico mostramos a possibilidade de adicionar algumas linhas verticais e horizontais no seu gráfico por meio de `geom_vline` e `geom_hline`. Por exemplo, podemos utilizar o `geom_hline` para colocar como argumento a média da variável no eixo y e o `geom_vline` para plotar a média da variável no eixo x, da seguinte forma.
 
 ````{r}
 ggplot(Cars93, aes(Min.Price, Price)) +
@@ -263,15 +264,12 @@ Veja como essas linhas nos permitem perceber uma certa assimetria nos dados, uma
 
 ## Gráfico de linhas
 
-Vamos mostrar um exemplo simples de um gráfico de linhas utilizando séries temporais e algumas maneiras de deixar ele mais elaborado. Para isso, vamos reconsiderar os dados utilizados em um post anterior, sobre os casos do novo coronavirus no Estado do Espírito Santo. Como no post já mostramos detalhadamente como importar e utilizar os dados, vamos pular essa etapa. vocês podem ver todas as instruções no seguinte [link](https://daslab-ufes.github.io/covid-es-r/). Uma pequena observação a ser feita, no post deixamos um link para baixar diretamente a base de dados, porém, o link mudou. Caso queira ter acesso a base de dados basta clickar [aqui](https://bi.s3.es.gov.br/covid19/MICRODADOS.csv). Deviso a isso, os posts foram feitos com dados de períodos diferentes, podendo então haver algumas divergências nos gráficos.
-
+Vamos mostrar um exemplo simples de um gráfico de linhas utilizando séries temporais e algumas maneiras de deixar ele mais elaborado. Para isso, vamos reconsiderar os dados utilizados em um post anterior, sobre os casos do novo coronavirus no Estado do Espírito Santo. Como no post já mostramos detalhadamente como importar e utilizar os dados, vamos pular essa etapa. Vocês podem acompanhar todas as instruções no seguinte [link](https://daslab-ufes.github.io/covid-es-r/). Uma pequena observação a ser feita, no post deixamos um link para baixar diretamente a base de dados, porém, o link mudou. Caso queira ter acesso a base de dados basta clicar [aqui](https://bi.s3.es.gov.br/covid19/MICRODADOS.csv). Devido a isso, os posts foram feitos com dados de períodos diferentes, podendo então haver algumas divergências nos gráficos. Aqui nesse post consideramos somente os valores a partir de 06/04/2021, para os quatro principais municipios do Estado: Vitória, Vila Velha, Serra e Cariacica, salvos no objeto `dados_sumarizados_5`, gerado a partir de uma base de dados que havia sido obtida anteriormente à publicação deste post.
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-library(highcharter)
+dados <- read.csv("MICRODADOS.csv", sep = ";")
 
- dados <- read.csv("MICRODADOS.csv",
-                    sep = ";")
 
 dados_filtrados <- 
   janitor::clean_names(dados) %>% 
@@ -289,6 +287,7 @@ dados_sumarizados_4 <- dados_filtrados %>%
 
 menor_data <- min(as.Date(dados$DataNotificacao))
 maior_data <- max(as.Date(dados$DataNotificacao))
+
 dados_sumarizados_5 <- dados_filtrados %>% 
   mutate(data_notificacao = as.Date(data_notificacao)) %>% 
   group_by(municipio, data_notificacao) %>% 
@@ -305,8 +304,8 @@ dados_sumarizados_5 <- dados_filtrados %>%
          total_menos4 = lag(total, 4), 
          total_menos5 = lag(total, 5), 
          total_menos6 = lag(total, 6)) %>% 
-  mutate(media_movel = (total + total_menos1 + total_menos2 + total_menos3 + total_menos4 + total_menos5 + total_menos6) / 7) %>% 
-  filter(data_notificacao > as.Date("2020-04-01"))
+  mutate(media_movel = (total + total_menos1 + total_menos2 + total_menos3 + 
+                          total_menos4 + total_menos5 + total_menos6) / 7) %>%   filter(data_notificacao > as.Date("2021-04-06"))
 
 
 dados_todos <- dados_filtrados %>% 
@@ -329,18 +328,15 @@ dados_todos <- dados_filtrados %>%
                             total_menos4 + total_menos5 + total_menos6) / 7) %>%
   group_by(municipio) %>% 
   mutate(perc_total = media_movel/max(media_movel, na.rm = TRUE)) %>% 
-  filter(data_notificacao > as.Date("2020-04-01")) %>% 
+  filter(data_notificacao > as.Date("2021-04-06")) %>% 
   mutate(municipio = forcats::fct_drop(municipio))
-
-
-
 ```
 
 
 
 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 ggplot(dados_sumarizados_5,
        aes(x = data_notificacao,
            y = media_movel,
@@ -367,7 +363,7 @@ ggplot(dados_sumarizados_5,
 
 
 Note algumas diferenças do primeiro para o segundo gráfico, que podem melhorar como algumas informações são apresentadas. No segundo gráfico, usamos algumas novidades como o `scale_x_date(date_breaks = "5 week")` que irá exibir as informações de 5 em 5 semanas.
-Uma observação a ser feita. Ocultamos a parte do tratamente e paração da base de dados pois ja produzimos um post mostrando passo a passo como fazer isso.   caso tenha interesse nesse assunto, basta clickar [aqui](https://daslab-ufes.github.io/highcharter/). 
+Uma observação a ser feita: ocultamos a parte do tratamente e separação da base de dados pois já produzimos um post mostrando passo a passo como fazer isso. Caso tenha interesse em reproduzir os resultados, basta ver o post [aqui](https://daslab-ufes.github.io/highcharter/). 
 
 
 ### Selecionando o período de tempo
@@ -375,7 +371,7 @@ Uma observação a ser feita. Ocultamos a parte do tratamente e paração da bas
 Em alguns casos você pode querer selecionar apenas um intervalo de tempo. Uma forma de fazer isso é utilizar o `limit` da função `scale_x_date()`  para selecionar um período de tempo nos dados.  Adicionar uma camada de `geom_point` aqui pode ajudar a perceber quando há observações na série de valores, principalmente quando há uma sequência de valores totalmente alinhados.
 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 ggplot(dados_sumarizados_5,
        aes(x = data_notificacao,
            y = media_movel,
@@ -391,16 +387,17 @@ ggplot(dados_sumarizados_5,
   theme_bw() + 
   geom_point() + 
   theme(legend.position = "bottom") +
-  scale_x_date(limit=c(as.Date("2021-03-22"),as.Date("2021-04-23")),date_breaks = "1 week")
+  scale_x_date(limit=c(as.Date("2021-04-22"), as.Date("2021-05-23")),date_breaks = "1 week")
 
 ```
 
-Vale ressaltar, que para gráficos de séries temporais, o eixo precisa ser uma variável do tipo **Date**. Caso contrário, seria apenas um gráfico de linhas.
+Vale ressaltar, que para gráficos de séries temporais, o eixo precisa ser uma variável do tipo `Date`. Caso contrário, seria apenas um gráfico de linhas.
 
 ## Gráficos de calor 
 
-```{r}
+Considerando agora o objeto `dados_todos`, que foi construído de forma semelhante ao que foi feito no post do pacote `highcharter`, com o link compartilhado anteriormente nesse post aqui. Aqui consideramos a variável `perc_total`, que mostra o percentual do número de casos de forma relativa ao pior momento da pandemia, para o período selecionado.
 
+```{r, warning=FALSE, message=FALSE}
 ggplot(dados_todos, aes(x = data_notificacao, y = municipio, 
     fill = perc_total)) + 
   geom_tile() + 
@@ -417,41 +414,19 @@ ggplot(dados_todos, aes(x = data_notificacao, y = municipio,
     subtitle = "Número de casos dividido pelo maior valor de número de casos",
     caption = "Fonte: Bovespa",
     x = "Data da notificação",
-    fill = ""
-      )
+    fill = "")
 
 ```
 
-Acima fizemos dois gráficos de calor, um simples e o outro um pouco mais elaborado. Gráficos de calor podem ser difíceis de visualizar as vezes. Neste caso, pode ser interessante fazer o uso de gráficos interativos e vamos falar disso agora.
+Acima fizemos dois gráficos de calor, um simples e o outro um pouco mais elaborado. Gráficos de calor podem ser difíceis de visualizar e por esse motivo pode ser interessante fazer o uso de gráficos interativos. Em seguida, vamos deixar algumas referências com relação a esse tópico.
 
 ### Outras opções de pacotes para visualização de dados
 
-Vamos deixar abaixo uma breve introdução de outros pacotes que você pode usar para plotar gráficos. Não vamos nos aprofundar em nenhum deles, mas como mencionado no começo do post, vamos deixar alguns links para você acessar e se aprofundar.
-
-### **plotly**
-
-O pacote `plotly`  cria gráficos interativos da web a partir de gráficos do ggplot. Uma maneira muito simples de usar o pacote é atribuir um gráfico do ggplot a um objeto e plotar esse gráfico com o `ggplotly`. Para esse exemplo vamos usar um gráfico que fizemos lá no comecinho do post.
-
-
-```{r message=FALSE, warning=FALSE}
-library(plotly)
-
-pt <- ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
-  geom_bar(position = position_dodge(preserve = "single")) + 
-    scale_fill_viridis_d() + 
-  theme_bw()
-
-ggplotly(pt)
-```
-
-<https://plotly.com/r/>
-
-<https://operdata.com.br/blog/como-usar-o-pacote-plotly-no-r/>
-
+Vamos deixar abaixo uma breve introdução de outros pacotes que você pode usar para plotar gráficos de maneira interativa ou animada. Não vamos nos aprofundar em nenhum deles, mas como mencionado no começo do post, vamos deixar alguns links para você ter acesso e buscar mais informações.
 
 ### **highcharter**
 
-o pacote `highcharter` também serve para fazer gráficos interativos. Já fizemos um post muito interessante para mostrar o uso desse pacote e você pode acessar clicando aqui [aqui](https://daslab-ufes.github.io/highcharter/). Segue um spoiler do que vai encontrar no post:
+o pacote `highcharter`  serve para fazer gráficos interativos. Já fizemos um post muito interessante para mostrar o uso desse pacote e você pode acessar clicando aqui [aqui](https://daslab-ufes.github.io/highcharter/). Segue um *spoiler* do que vai encontrar no post:
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -501,6 +476,25 @@ grafico6 <- hchart(
 grafico6
 ```
 
+### **plotly**
+
+O pacote `plotly`  cria gráficos interativos da web a partir de gráficos do ggplot. Uma maneira muito simples de usar o pacote é atribuir um gráfico do ggplot a um objeto e plotar esse gráfico com o `ggplotly`. Para esse exemplo vamos usar um gráfico que fizemos lá no comecinho do post.
+
+
+```{r message=FALSE, warning=FALSE}
+library(plotly)
+
+pt <- ggplot(Cars93, aes(x = Type, fill = AirBags)) + 
+  geom_bar(position = position_dodge(preserve = "single")) + 
+    scale_fill_viridis_d() + 
+  theme_bw()
+
+ggplotly(pt)
+```
+
+<https://plotly.com/r/>
+
+<https://operdata.com.br/blog/como-usar-o-pacote-plotly-no-r/>
 
 
 ### **gganimate**
@@ -514,4 +508,3 @@ grafico6
 <https://www.r-graph-gallery.com/index.html>
 
 <https://github.com/rstudio/cheatsheets/blob/master/data-visualization-2.1.pdf>
-
