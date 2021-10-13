@@ -348,7 +348,7 @@ ggplot(dados_sumarizados_5,
        aes(x = data_notificacao,
            y = media_movel,
            color = municipio)) +
-  geom_line() +
+  geom_line(linetype = "dashed") +
   labs(
     title = "Número de casos pela COVID-19 no ES",
     subtitle = "Considerando somente Grande Vitória",
@@ -362,7 +362,7 @@ ggplot(dados_sumarizados_5,
 ```
 
 
-Note algumas diferenças do primeiro para o segundo gráfico, que podem melhorar como algumas informações são apresentadas. No segundo gráfico, usamos algumas novidades como o `scale_x_date(date_breaks = "5 week")` que irá exibir as informações de 5 em 5 semanas.
+Note algumas diferenças do primeiro para o segundo gráfico, que podem melhorar como algumas informações são apresentadas. No segundo gráfico, usamos algumas novidades como o `scale_x_date(date_breaks = "5 week")` que irá exibir as informações de 5 em 5 semanas. Fizemos também o uso do argumento `linetype` que nos permite alterar o tipo da linha do gráfico. São várias opções, você pode visualizar algumas neste [link](http://www.sthda.com/english/wiki/ggplot2-line-types-how-to-change-line-types-of-a-graph-in-r-software)
 Uma observação a ser feita: ocultamos a parte do tratamente e separação da base de dados pois já produzimos um post mostrando passo a passo como fazer isso. Caso tenha interesse em reproduzir os resultados, basta ver o post [aqui](https://daslab-ufes.github.io/highcharter/). 
 
 
